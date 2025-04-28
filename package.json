@@ -1,0 +1,15 @@
+{
+  "name": "@commonmodule/image-combiner",
+  "author": "yj.gaia",
+  "homepage": "https://personas.gaia.cc/yj.gaia",
+  "version": "0.0.1",
+  "type": "module",
+  "types": "./lib/index.d.ts",
+  "main": "./lib/index.js",
+  "dependencies": {
+    "upng-js": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/upng-js": "^2.1.5"
+  }
+}
