@@ -2,14 +2,11 @@
   "name": "@commonmodule/image-combiner",
   "author": "yj.gaia",
   "homepage": "https://personas.gaia.cc/yj.gaia",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "types": "./lib/index.d.ts",
   "main": "./lib/index.js",
   "dependencies": {
-    "upng-js": "^2.1.0"
-  },
-  "devDependencies": {
-    "@types/upng-js": "^2.1.5"
+    "@resvg/resvg-wasm": "^2.6.2"
   }
 }

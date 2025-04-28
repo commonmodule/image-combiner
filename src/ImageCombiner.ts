@@ -1,81 +1,65 @@
-import UPNG from "upng-js";
+import { Resvg } from "@resvg/resvg-wasm";
 
 class ImageCombiner {
-  private blendPixel(
-    bgR: number,
-    bgG: number,
-    bgB: number,
-    bgA: number,
-    fgR: number,
-    fgG: number,
-    fgB: number,
-    fgA: number,
-  ): [number, number, number, number] {
-    const alphaF = fgA / 255;
-    const alphaB = bgA / 255;
-    const outA = alphaF + alphaB * (1 - alphaF);
-    if (outA < 1e-6) return [0, 0, 0, 0];
-
-    const outR = Math.round(
-      (fgR * alphaF + bgR * alphaB * (1 - alphaF)) / outA,
-    );
-    const outG = Math.round(
-      (fgG * alphaF + bgG * alphaB * (1 - alphaF)) / outA,
-    );
-    const outB = Math.round(
-      (fgB * alphaF + bgB * alphaB * (1 - alphaF)) / outA,
-    );
-    const outAlpha = Math.round(outA * 255);
-    return [outR, outG, outB, outAlpha];
+  private arrayBufferToBase64(buffer: ArrayBuffer): string {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
   }
 
-  private blendImage(base: Uint8Array, overlay: Uint8Array) {
-    for (let i = 0; i < base.length; i += 4) {
-      const [bgR, bgG, bgB, bgA] = [
-        base[i],
-        base[i + 1],
-        base[i + 2],
-        base[i + 3],
-      ];
-      const [fgR, fgG, fgB, fgA] = [
-        overlay[i],
-        overlay[i + 1],
-        overlay[i + 2],
-        overlay[i + 3],
-      ];
-      const [r, g, b, a] = this.blendPixel(
-        bgR,
-        bgG,
-        bgB,
-        bgA,
-        fgR,
-        fgG,
-        fgB,
-        fgA,
-      );
-      base[i] = r;
-      base[i + 1] = g;
-      base[i + 2] = b;
-      base[i + 3] = a;
-    }
-  }
+  public combine(
+    width: number,
+    height: number,
+    pngBuffers: ArrayBuffer[],
+    textOptions?: {
+      fontBytes: Uint8Array;
+      x: number;
+      y: number;
+      text: string;
+      fontSize: number;
+      color: string;
+    },
+  ): Uint8Array<ArrayBufferLike> {
+    let svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">`;
+    pngBuffers.forEach((buffer) => {
+      const base64String = this.arrayBufferToBase64(buffer);
+      svg +=
+        `<image href="data:image/png;base64,${base64String}" x="0" y="0" width="${width}" height="${height}" />`;
+    });
 
-  public combine(buffers: ArrayBuffer[]): ArrayBuffer {
-    const images = buffers.map((buffer) => UPNG.decode(buffer));
-    const width = images[0].width;
-    const height = images[0].height;
-    for (let i = 1; i < images.length; i++) {
-      const image = images[i];
-      if (image.width !== width || image.height !== height) {
-        throw new Error("All images must have the same dimensions");
-      }
+    if (textOptions) {
+      const { fontBytes, x, y, text } = textOptions;
+      svg += `<style>
+  @font-face {
+    font-family: "customFont";
+    src: url('data:font/woff2;base64,${
+        btoa(String.fromCharCode(...fontBytes))
+      }') format("woff2");
+  }
+  text { font-family:"customFont"; font-size:${textOptions.fontSize}px; fill:${textOptions.color}; }
+</style>`;
+      svg +=
+        `<text x="${x}" y="${y}" dominant-baseline="central" text-anchor="middle">${text}</text>`;
     }
-    const rgbas = images.map((image) => new Uint8Array(UPNG.toRGBA8(image)[0]));
-    const combined = rgbas[0];
-    for (let i = 1; i < rgbas.length; i++) {
-      this.blendImage(combined, rgbas[i]);
-    }
-    return UPNG.encode([combined.buffer], width, height, 0);
+
+    svg += "</svg>";
+    const resvg = new Resvg(
+      svg,
+      !textOptions ? { fitTo: { mode: "width", value: width } } : {
+        fitTo: { mode: "width", value: width },
+        font: {
+          fontBuffers: [textOptions.fontBytes],
+          defaultFontFamily: "customFont",
+          loadSystemFonts: false,
+        },
+      },
+    );
+    return resvg.render().asPng();
   }
 }
 
