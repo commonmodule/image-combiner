@@ -1,6 +1,11 @@
-import { Resvg } from "@resvg/resvg-wasm";
+import { initWasm, Resvg } from "@resvg/resvg-wasm";
+import wasmUrl from "@resvg/resvg-wasm/index_bg.wasm";
 
 class ImageCombiner {
+  public async initWasm() {
+    await initWasm(wasmUrl);
+  }
+
   private arrayBufferToBase64(buffer: ArrayBuffer): string {
     let binary = "";
     const bytes = new Uint8Array(buffer);

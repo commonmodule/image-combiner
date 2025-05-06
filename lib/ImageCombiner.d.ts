@@ -1,4 +1,5 @@
 declare class ImageCombiner {
+    initWasm(): Promise<void>;
     private arrayBufferToBase64;
     combine(width: number, height: number, pngBuffers: ArrayBuffer[], textOptions?: {
         fontBytes: Uint8Array;
