@@ -2,7 +2,7 @@
   "name": "@commonmodule/image-combiner",
   "author": "yj.gaia",
   "homepage": "https://personas.gaia.cc/yj.gaia",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "types": "./lib/index.d.ts",
   "main": "./lib/index.js",
